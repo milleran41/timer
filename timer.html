@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Таймер обратного отсчёта</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #1b1b1f;
+    color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    transition: background 0.4s ease;
+  }
+  body.alert-bg {
+    background: #3a1212;
+  }
+  .container {
+    text-align: center;
+    padding: 2rem;
+    width: 100%;
+    max-width: 480px;
+  }
+  h1 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    color: #ccc;
+  }
+  .inputs {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .inputs label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+  .inputs input {
+    width: 70px;
+    font-size: 1.2rem;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: #2a2a2f;
+    color: #fff;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .display {
+    font-size: 5rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    margin: 1rem 0;
+    letter-spacing: 2px;
+    transition: color 0.2s, transform 0.2s;
+  }
+  .display.warning {
+    color: #ff5252;
+    text-shadow: 0 0 20px rgba(255,82,82,0.6);
+  }
+  .display.pulse {
+    animation: pulse 1s ease-in-out;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    20% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+  }
+  .progress-ring {
+    margin: 0 auto 1.5rem;
+    display: block;
+  }
+  .progress-ring__bg {
+    stroke: #333;
+  }
+  .progress-ring__fg {
+    stroke: #4caf50;
+    transition: stroke-dashoffset 0.2s linear, stroke 0.3s ease;
+  }
+  .progress-ring__fg.warning {
+    stroke: #ff5252;
+  }
+  .buttons {
+    display: flex;
+    gap: 0.7rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    font-size: 1rem;
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: #4caf50;
+    color: #fff;
+    font-weight: 500;
+    transition: filter 0.15s, opacity 0.15s;
+  }
+  button:hover { filter: brightness(1.1); }
+  button:active { transform: scale(0.97); }
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-pause { background: #ff9800; }
+  .btn-reset { background: #607d8b; }
+  .btn-pip { background: #3f51b5; }
+  .btn-pip.active { background: #2e7d32; }
+  .pip-hint {
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 0.5rem;
+  }
+  .pip-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #ccc;
+    margin-top: 0.8rem;
+    cursor: pointer;
+  }
+  .pip-checkbox input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+  .status {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: #999;
+    min-height: 1.4em;
+  }
+  .status.finished {
+    color: #ff5252;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Таймер обратного отсчёта</h1>
+
+  <div class="inputs" id="inputs">
+    <label>Часы
+      <input type="number" id="hours" min="0" max="23" value="0">
+    </label>
+    <label>Минуты
+      <input type="number" id="minutes" min="0" max="59" value="1">
+    </label>
+    <label>Секунды
+      <input type="number" id="seconds" min="0" max="59" value="0">
+    </label>
+  </div>
+
+  <svg class="progress-ring" width="180" height="180">
+    <circle class="progress-ring__bg" cx="90" cy="90" r="80" fill="none" stroke-width="10"/>
+    <circle class="progress-ring__fg" cx="90" cy="90" r="80" fill="none" stroke-width="10"
+            stroke-linecap="round" transform="rotate(-90 90 90)"
+            stroke-dasharray="502.65" stroke-dashoffset="0"/>
+  </svg>
+
+  <div class="display" id="display">01:00</div>
+
+  <div class="buttons">
+    <button id="startBtn">Старт</button>
+    <button id="pauseBtn" class="btn-pause" disabled>Пауза</button>
+    <button id="resetBtn" class="btn-reset">Сброс</button>
+  </div>
+
+  <div class="buttons" style="margin-top: 0.8rem;">
+    <button id="pipBtn" class="btn-pip">Включить плавающее окно</button>
+  </div>
+  <label class="pip-checkbox">
+    <input type="checkbox" id="pipAutoCheckbox">
+    Открывать плавающее окно автоматически при старте
+  </label>
+  <div class="pip-hint" id="pipHint">Плавающее окно можно открыть только по клику (требование браузера). Включи галочку выше — и оно откроется автоматически при нажатии «Старт» и останется видимым на других вкладках, в том числе последние 10 секунд.</div>
+
+  <div class="status" id="status"></div>
+</div>
+
+<canvas id="pipCanvas" width="120" height="120" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;"></canvas>
+<video id="pipVideo" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;" muted playsinline autoplay></video>
+
+<script>
+const hoursInput = document.getElementById('hours');
+const minutesInput = document.getElementById('minutes');
+const secondsInput = document.getElementById('seconds');
+const display = document.getElementById('display');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const statusEl = document.getElementById('status');
+const progressFg = document.querySelector('.progress-ring__fg');
+const inputsBlock = document.getElementById('inputs');
+const pipBtn = document.getElementById('pipBtn');
+const pipHint = document.getElementById('pipHint');
+const pipAutoCheckbox = document.getElementById('pipAutoCheckbox');
+const pipCanvas = document.getElementById('pipCanvas');
+const pipVideo = document.getElementById('pipVideo');
+const pipCtx = pipCanvas.getContext('2d');
+
+const CIRCUMFERENCE = 2 * Math.PI * 80;
+progressFg.style.strokeDasharray = CIRCUMFERENCE;
+
+let totalSeconds = 60;
+let remaining = totalSeconds;
+let intervalId = null;
+let isPaused = false;
+let audioCtx = null;
+
+let pipSupported = 'pictureInPictureEnabled' in document
+  && document.pictureInPictureEnabled
+  && typeof HTMLCanvasElement.prototype.captureStream === 'function';
+let pipDrawRafId = null;
+
+if (!pipSupported) {
+  pipBtn.disabled = true;
+  pipAutoCheckbox.disabled = true;
+  pipBtn.textContent = 'Плавающее окно недоступно в этом браузере';
+  pipHint.textContent = 'Picture-in-Picture не поддерживается (требуется Chrome/Edge на десктопе или Android).';
+}
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioCtx;
+}
+
+// Звуковой сигнал: тик при обратном отсчёте, финальный сигнал в конце
+function playBeep(frequency, duration, volume = 0.3) {
+  try {
+    const ctx = getAudioCtx();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'sine';
+    gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + duration);
+  } catch (e) {
+    console.warn('Audio error:', e);
+  }
+}
+
+function playTick() {
+  playBeep(880, 0.12, 0.25);
+}
+
+function playFinalSignal() {
+  // Серия из трёх более долгих и громких сигналов
+  playBeep(660, 0.35, 0.4);
+  setTimeout(() => playBeep(660, 0.35, 0.4), 450);
+  setTimeout(() => playBeep(880, 0.6, 0.45), 900);
+}
+
+const PIP_SIZE_NORMAL = 120;
+const PIP_SIZE_WARNING = 240;
+
+function drawPipFrame() {
+  const isWarning = remaining <= 10;
+  const size = isWarning ? PIP_SIZE_WARNING : PIP_SIZE_NORMAL;
+
+  if (pipCanvas.width !== size || pipCanvas.height !== size) {
+    pipCanvas.width = size;
+    pipCanvas.height = size;
+  }
+
+  const w = pipCanvas.width;
+  const h = pipCanvas.height;
+
+  // фон
+  pipCtx.fillStyle = isWarning ? '#3a1212' : '#1b1b1f';
+  pipCtx.fillRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = isWarning ? h / 2 - 10 : h / 2;
+  const r = isWarning ? 70 : 45;
+  const fraction = totalSeconds > 0 ? remaining / totalSeconds : 0;
+  const lineWidth = isWarning ? 10 : 6;
+  const fontSize = isWarning ? 42 : 24;
+
+  // кольцо прогресса
+  pipCtx.lineWidth = lineWidth;
+  pipCtx.lineCap = 'round';
+
+  pipCtx.beginPath();
+  pipCtx.arc(cx, cy, r, 0, Math.PI * 2);
+  pipCtx.strokeStyle = '#333';
+  pipCtx.stroke();
+
+  pipCtx.beginPath();
+  pipCtx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * fraction);
+  pipCtx.strokeStyle = isWarning ? '#ff5252' : '#4caf50';
+  pipCtx.stroke();
+
+  // текст времени
+  pipCtx.fillStyle = isWarning ? '#ff5252' : '#f5f5f5';
+  pipCtx.font = '600 ' + fontSize + 'px -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+  pipCtx.textAlign = 'center';
+  pipCtx.textBaseline = 'middle';
+  pipCtx.fillText(formatTime(remaining), cx, cy);
+
+  // подпись внизу (только в полном режиме)
+  if (isWarning) {
+    pipCtx.fillStyle = '#999';
+    pipCtx.font = '400 16px -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+    pipCtx.fillText(remaining > 0 ? 'Осталось' : 'Время вышло!', cx, h - 22);
+  }
+}
+
+function pipDrawLoop() {
+  drawPipFrame();
+  pipDrawRafId = requestAnimationFrame(pipDrawLoop);
+}
+
+async function enterPip() {
+  if (!pipSupported) return;
+  try {
+    drawPipFrame();
+
+    if (!pipVideo.srcObject) {
+      const stream = pipCanvas.captureStream(25);
+      pipVideo.srcObject = stream;
+      pipVideo.width = pipCanvas.width;
+      pipVideo.height = pipCanvas.height;
+    }
+
+    if (pipVideo.readyState < 1) {
+      await new Promise((resolve) => {
+        pipVideo.onloadedmetadata = resolve;
+      });
+    }
+
+    await pipVideo.play();
+
+    if (!pipDrawRafId) pipDrawLoop();
+
+    if (document.pictureInPictureElement !== pipVideo) {
+      await pipVideo.requestPictureInPicture();
+    }
+    pipBtn.classList.add('active');
+    pipBtn.textContent = 'Плавающее окно включено';
+    pipHint.textContent = 'Плавающее окно открыто.';
+  } catch (e) {
+    console.warn('PiP error:', e);
+    pipHint.textContent = 'Не удалось открыть плавающее окно: ' + e.name + ' — ' + e.message;
+  }
+}
+
+async function exitPip() {
+  if (document.pictureInPictureElement) {
+    try { await document.exitPictureInPicture(); } catch (e) {}
+  }
+}
+
+document.addEventListener('leavepictureinpicture', () => {
+  pipBtn.classList.remove('active');
+  pipBtn.textContent = 'Включить плавающее окно';
+  if (pipDrawRafId) {
+    cancelAnimationFrame(pipDrawRafId);
+    pipDrawRafId = null;
+  }
+});
+
+pipBtn.addEventListener('click', () => {
+  if (document.pictureInPictureElement) {
+    exitPip();
+  } else {
+    enterPip();
+  }
+});
+
+function formatTime(totalSec) {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) {
+    return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+  }
+  return [m, s].map(v => String(v).padStart(2, '0')).join(':');
+}
+
+function updateDisplay() {
+  display.textContent = formatTime(remaining);
+
+  // Прогресс кольца
+  const fraction = totalSeconds > 0 ? remaining / totalSeconds : 0;
+  const offset = CIRCUMFERENCE * (1 - fraction);
+  progressFg.style.strokeDashoffset = offset;
+
+  // Визуальная индикация последних 10 секунд
+  if (remaining <= 10 && remaining > 0) {
+    display.classList.add('warning');
+    progressFg.classList.add('warning');
+  } else {
+    display.classList.remove('warning');
+    progressFg.classList.remove('warning');
+  }
+
+  if (document.pictureInPictureElement) {
+    drawPipFrame();
+  }
+}
+
+function tickAnimation() {
+  display.classList.remove('pulse');
+  // перезапуск анимации
+  void display.offsetWidth;
+  display.classList.add('pulse');
+}
+
+function getInputSeconds() {
+  const h = parseInt(hoursInput.value, 10) || 0;
+  const m = parseInt(minutesInput.value, 10) || 0;
+  const s = parseInt(secondsInput.value, 10) || 0;
+  return Math.max(0, h * 3600 + m * 60 + s);
+}
+
+function setInputsDisabled(disabled) {
+  hoursInput.disabled = disabled;
+  minutesInput.disabled = disabled;
+  secondsInput.disabled = disabled;
+}
+
+function startTimer() {
+  // инициализация AudioContext по пользовательскому действию (требование браузеров)
+  getAudioCtx();
+
+  if (!intervalId) {
+    if (!isPaused) {
+      totalSeconds = getInputSeconds();
+      remaining = totalSeconds;
+      if (remaining <= 0) {
+        statusEl.textContent = 'Задайте время больше нуля';
+        statusEl.classList.remove('finished');
+        return;
+      }
+    }
+    isPaused = false;
+    setInputsDisabled(true);
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+    statusEl.textContent = 'Идёт отсчёт...';
+    statusEl.classList.remove('finished');
+    document.body.classList.remove('alert-bg');
+
+    updateDisplay();
+
+    if (pipSupported && pipAutoCheckbox.checked && !document.pictureInPictureElement) {
+      enterPip();
+    }
+
+    intervalId = setInterval(() => {
+      remaining--;
+
+      if (remaining <= 10 && remaining > 0) {
+        playTick();
+        tickAnimation();
+        document.body.classList.add('alert-bg');
+      }
+
+      if (remaining <= 0) {
+        remaining = 0;
+        updateDisplay();
+        finishTimer();
+        return;
+      }
+
+      updateDisplay();
+    }, 1000);
+  }
+}
+
+function pauseTimer() {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+    isPaused = true;
+    startBtn.disabled = false;
+    startBtn.textContent = 'Продолжить';
+    pauseBtn.disabled = true;
+    statusEl.textContent = 'Пауза';
+  }
+}
+
+function finishTimer() {
+  clearInterval(intervalId);
+  intervalId = null;
+  isPaused = false;
+  setInputsDisabled(false);
+  startBtn.disabled = false;
+  startBtn.textContent = 'Старт';
+  pauseBtn.disabled = true;
+  statusEl.textContent = 'Время вышло!';
+  statusEl.classList.add('finished');
+  document.body.classList.remove('alert-bg');
+  display.classList.remove('warning');
+  progressFg.classList.remove('warning');
+  playFinalSignal();
+  tickAnimation();
+}
+
+function resetTimer() {
+  clearInterval(intervalId);
+  intervalId = null;
+  isPaused = false;
+  exitPip();
+  setInputsDisabled(false);
+  startBtn.disabled = false;
+  startBtn.textContent = 'Старт';
+  pauseBtn.disabled = true;
+  statusEl.textContent = '';
+  statusEl.classList.remove('finished');
+  document.body.classList.remove('alert-bg');
+  display.classList.remove('warning', 'pulse');
+  progressFg.classList.remove('warning');
+
+  totalSeconds = getInputSeconds();
+  remaining = totalSeconds;
+  updateDisplay();
+}
+
+startBtn.addEventListener('click', startTimer);
+pauseBtn.addEventListener('click', pauseTimer);
+resetBtn.addEventListener('click', resetTimer);
+
+[hoursInput, minutesInput, secondsInput].forEach(input => {
+  input.addEventListener('change', () => {
+    if (!intervalId && !isPaused) {
+      totalSeconds = getInputSeconds();
+      remaining = totalSeconds;
+      updateDisplay();
+    }
+  });
+});
+
+// Инициализация
+updateDisplay();
+</script>
+</body>
+</html>
