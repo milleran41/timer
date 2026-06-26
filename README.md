@@ -10,6 +10,11 @@ Compact desktop timer for Windows with a circular progress indicator, sound aler
 
 [Download Timer](https://github.com/milleran41/timer/raw/main/dist/timer.exe)
 
+## System Requirements
+
+- Platform: Windows 10/11 (64-bit)
+- Download: Ready-to-run `.exe` for Windows
+
 ## How to use
 
 1. Download `timer.exe`.
