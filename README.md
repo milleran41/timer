@@ -4,7 +4,7 @@ Compact desktop timer for Windows with a circular progress indicator, sound aler
 
 ## Screenshot
 
-![Timer screenshot](Таймер.png)
+![Timer screenshot](screenshot.png)
 
 ## Download
 
