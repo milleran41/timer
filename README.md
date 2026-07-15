@@ -34,3 +34,14 @@ Compact desktop timer for Windows with a circular progress indicator, sound aler
 
 - `timer.py`: source code
 - `dist/timer.exe`: ready-to-run Windows build
+- `build_store_package.py`: helper script for creating a Microsoft Store `.msix` package
+
+## Microsoft Store package
+
+To create `dist/timer.msix` for Microsoft Store, fill the Partner Center values at the top of `build_store_package.py`, install Windows SDK with `MakeAppx.exe`, then run:
+
+```powershell
+python build_store_package.py
+```
+
+More details: [docs/microsoft-store-msix.md](docs/microsoft-store-msix.md)
