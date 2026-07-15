@@ -50,6 +50,7 @@ def find_makeappx() -> Path | None:
         kits = Path(root) / "Windows Kits" / "10" / "bin"
         candidates.extend(kits.glob("*/x64/MakeAppx.exe"))
         candidates.extend(kits.glob("*/x86/MakeAppx.exe"))
+        candidates.extend((Path(root) / "Windows Kits" / "10" / "App Certification Kit").glob("[Mm]akeappx.exe"))
 
     for candidate in sorted(candidates, reverse=True):
         if candidate.exists():

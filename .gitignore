@@ -4,6 +4,7 @@ __pycache__/
 *.pyd
 
 build/
+*.msix
 
 .venv/
 venv/
