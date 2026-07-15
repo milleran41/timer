@@ -5,6 +5,8 @@ __pycache__/
 
 build/
 *.msix
+.build_deps/
+.venv-build/
 
 .venv/
 venv/
