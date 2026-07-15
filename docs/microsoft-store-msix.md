@@ -2,20 +2,24 @@
 
 This project includes `build_store_package.py`, a helper script that prepares a Microsoft Store `.msix` package from `dist/timer.exe`.
 
-## 1. Fill Partner Center values
+## 1. Product identity
 
-Open `build_store_package.py` and replace the values at the top:
+`build_store_package.py` already contains the FineTimer identity from Microsoft Partner Center:
 
 ```python
-PACKAGE_NAME = "MillerAndreas.Timer"
-PUBLISHER = "CN=PASTE_YOUR_PUBLISHER_ID_HERE"
-PUBLISHER_DISPLAY_NAME = "Andreas Miller"
-APP_DISPLAY_NAME = "Timer"
-APP_DESCRIPTION = "Simple desktop timer by CodeWerk."
+PACKAGE_NAME = "CodeWerkStudio.FineTimer"
+PUBLISHER = "CN=9BAA081B-9857-4C15-9E43-E9B9F5577B14"
+PUBLISHER_DISPLAY_NAME = "CodeWerk Studio"
+APP_DISPLAY_NAME = "FineTimer"
+APP_DESCRIPTION = "Compact desktop timer by CodeWerk Studio."
 PACKAGE_VERSION = "1.0.0.0"
 ```
 
-Use the exact package identity and publisher values from Microsoft Partner Center.
+Microsoft Store product URL:
+
+```text
+https://apps.microsoft.com/detail/9MWTDPLL3C5M
+```
 
 ## 2. Install Windows SDK
 
@@ -42,7 +46,7 @@ If Python is not in PATH, use the full path to your Python executable.
 The output file will be:
 
 ```text
-dist/timer.msix
+dist/FineTimer.msix
 ```
 
 ## Notes

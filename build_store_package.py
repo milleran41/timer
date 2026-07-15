@@ -11,12 +11,12 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 
-# Fill these values from Microsoft Partner Center before publishing.
-PACKAGE_NAME = "MillerAndreas.Timer"
-PUBLISHER = "CN=PASTE_YOUR_PUBLISHER_ID_HERE"
-PUBLISHER_DISPLAY_NAME = "Andreas Miller"
-APP_DISPLAY_NAME = "Timer"
-APP_DESCRIPTION = "Simple desktop timer by CodeWerk."
+# Product identity from Microsoft Partner Center.
+PACKAGE_NAME = "CodeWerkStudio.FineTimer"
+PUBLISHER = "CN=9BAA081B-9857-4C15-9E43-E9B9F5577B14"
+PUBLISHER_DISPLAY_NAME = "CodeWerk Studio"
+APP_DISPLAY_NAME = "FineTimer"
+APP_DESCRIPTION = "Compact desktop timer by CodeWerk Studio."
 PACKAGE_VERSION = "1.0.0.0"
 APPLICATION_ID = "Timer"
 PROCESSOR_ARCHITECTURE = "x64"
@@ -26,7 +26,7 @@ PROCESSOR_ARCHITECTURE = "x64"
 PROJECT_ROOT = Path(__file__).resolve().parent
 EXE_PATH = PROJECT_ROOT / "dist" / "timer.exe"
 ICON_PATH = PROJECT_ROOT / "icon.ico"
-OUTPUT_MSIX = PROJECT_ROOT / "dist" / "timer.msix"
+OUTPUT_MSIX = PROJECT_ROOT / "dist" / "FineTimer.msix"
 
 
 def fail(message: str, code: int = 1) -> None:
