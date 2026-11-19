@@ -12,7 +12,7 @@ PUBLISHER = "CN=9BAA081B-9857-4C15-9E43-E9B9F5577B14"
 PUBLISHER_DISPLAY_NAME = "CodeWerk Studio"
 APP_DISPLAY_NAME = "FineTimer"
 APP_DESCRIPTION = "Compact desktop timer by CodeWerk Studio."
-PACKAGE_VERSION = "1.0.0.0"
+PACKAGE_VERSION = "1.0.1.0"
 ```
 
 Microsoft Store product URL:
@@ -51,6 +51,9 @@ dist/FineTimer.msix
 
 ## Notes
 
+- `1.0.1.0` is the MSIX package version, not an embedded EXE FileVersion.
+- The published standalone EXE was copied from the ready build, not rebuilt.
+- Never commit signing certificates, private keys, or `msix/signing/`.
 - `timer.exe` is copied from `dist/timer.exe`.
 - PNG package assets are generated from `icon.ico` when Pillow is available.
 - If Pillow is not installed, the script creates valid fallback PNG assets.

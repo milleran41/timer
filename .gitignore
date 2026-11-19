@@ -11,3 +11,18 @@ build/
 .venv/
 venv/
 env/
+
+# Signing material and local configuration must never be published.
+msix/signing/
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+.env
+.env.*
+settings.json
+*.log
+Thumbs.db
+Desktop.ini
