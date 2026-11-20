@@ -4,19 +4,31 @@ Compact Windows timer with a black, white and yellow interface, circular progres
 
 ## Release Details
 
-- MSIX package version: **1.0.1.0**. The EXE has no embedded FileVersion/ProductVersion.
+- Portable update: **2026-11-20** (build date, not an embedded version number). The EXE has no embedded FileVersion/ProductVersion.
+- The existing MSIX package remains **1.0.1.0**. Microsoft Store and MSIX are not updated by this portable release.
 - The downloadable EXE is the existing ready build, published without rebuilding.
-- Size: **51,026,824 bytes**.
-- SHA-256: `9972ae738ce374c79e1114e9da85a2cad4763ee97682394b96a146ca058f70a3`.
+- Size: **51,008,654 bytes**.
+- SHA-256: `27e63e28d35ff6766a25c99e3e28dd5ce6c0778ee8c8e132e251642d55487ac8`.
 - [FineTimer in Microsoft Store](https://apps.microsoft.com/detail/9MWTDPLL3C5M).
 
-The window requests always-on-top placement. Visibility over exclusive fullscreen games is **not guaranteed**; that known limitation has not been verified as fixed.
+The portable update actively restores its topmost position above ordinary windows and windowed/borderless games. True exclusive fullscreen is **not supported**. Compatibility with a particular game, fullscreen optimizations and display configuration is not universal.
+
+## Window and Game Visibility
+
+`win_overlay.py` reasserts the timer's topmost position after foreground-window changes and once per second while it is visible. The automatic raise uses `SWP_NOACTIVATE`: it does not activate the timer or move/resize other applications. The timer also returns inside the visible desktop after screen geometry changes. It does not inject code into games.
+
+- Ordinary windows and windowed games: supported topmost mechanism.
+- Borderless fullscreen games: intended supported mode; test the specific game and display configuration.
+- Fullscreen optimizations: behavior depends on the actual presentation mode and game.
+- True exclusive fullscreen: not supported; use a windowed/borderless mode if the timer is hidden.
+
+The owner reports successful manual game checks, without listing game names or exact presentation modes. This publication check confirmed a visible topmost window in the ready EXE. Countdown, pause/reset, local settings, sound dispatch and overlay guards were tested separately against the matching source. Automated tests did not run real games or confirm audible output.
 
 ## Screenshot
 
 ![Timer screenshot](screenshot.png)
 
-The image is a 2x Qt rendering of the standard 160x160 widget from the verified source, not a desktop capture. Compiling `timer.py` was verified to produce the same code as the ready EXE's embedded Python module.
+The image is a 2x Qt rendering of the standard 160x160 widget from the previously verified source, not a desktop capture. The drawing and time-dialog code are unchanged in this portable update, so the image is retained. Both current modules, `timer.py` and `win_overlay.py`, were verified against the code embedded in the new ready EXE.
 
 ## Download
 
@@ -52,9 +64,11 @@ The image is a 2x Qt rendering of the standard 160x160 widget from the verified 
 ## Project files
 
 - `timer.py`: source code
+- `win_overlay.py`: Windows topmost keeper and foreground-event handling
 - `dist/timer.exe`: ready-to-run Windows build
 - `build_store_package.py`: helper script for creating a Microsoft Store `.msix` package
 - `timer.spec`: PyInstaller configuration using the repository-relative icon. No build was performed for this update.
+- `build.bat`: supplied Windows build script, pinning PyInstaller 6.22.0 for the recorded startup compatibility issue. It was not executed for this publication.
 - `icon.ico`: current application icon
 - `timer.html`: separate historical browser variant, not the source of the Windows EXE
 

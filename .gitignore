@@ -26,3 +26,8 @@ settings.json
 *.log
 Thumbs.db
 Desktop.ini
+
+# Local diagnostics and previous executable copies.
+backup/
+build_dbg/
+dist_dbg/

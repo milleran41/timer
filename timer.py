@@ -8,8 +8,11 @@ from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtCore import (Qt, QTimer, QPropertyAnimation, QEasingCurve,
                           QRect, QRectF, QPointF, pyqtProperty, QUrl)
 from PyQt6.QtGui import (QPainter, QColor, QPen, QFont, QFontMetricsF,
-                         QPainterPath, QPolygonF, QMouseEvent, QDesktopServices)
+                         QPainterPath, QPolygonF, QMouseEvent, QDesktopServices,
+                         QGuiApplication)
 import pygame
+
+from win_overlay import TopmostKeeper
 
 
 # ── Audio ──────────────────────────────────────────────────────────────────
@@ -451,6 +454,9 @@ class TimerWindow(QWidget):
 
         self.feedback = FeedbackTracker()
         self._feedback_card = None
+        self._topmost = None   # keeps the clock above games (see win_overlay)
+        self._screens_watched = False
+        self._watched_screens = []
 
         self._setup_window()
         self._setup_animations()
@@ -500,6 +506,12 @@ class TimerWindow(QWidget):
     # ── Show / close ──
     def showEvent(self, event):
         super().showEvent(event)
+        # Qt applies WS_EX_TOPMOST only once; games raise themselves above it
+        if self._topmost is None:
+            self._topmost = TopmostKeeper(self)
+        self._topmost.start()
+        self._watch_screens()
+        self._ensure_on_screen()
         if not self._shown_once:
             self._shown_once = True
             self._appear = 0.0
@@ -516,6 +528,8 @@ class TimerWindow(QWidget):
         self._run(self.anim_close, self._appear, 0.0)
 
     def _finish_close(self):
+        if self._topmost is not None:
+            self._topmost.stop()
         self._allow_close = True
         self.close()
         QApplication.quit()
@@ -535,6 +549,54 @@ class TimerWindow(QWidget):
         if rect.top() < screen.top() + 10:
             rect.moveTop(screen.top() + 10)
         self._run(self.anim_geom, self.geometry(), rect)
+
+    # ── Staying visible on the desktop ──
+    def _watch_screens(self):
+        """Follows desktop changes: a game that switches to another monitor
+        or to a lower resolution shrinks the area windows can be drawn in."""
+        if self._screens_watched:
+            return
+        self._screens_watched = True
+        app = QApplication.instance()
+        if app is not None:
+            app.screenAdded.connect(self._on_screen_added)
+        for screen in QApplication.screens():
+            self._connect_screen(screen)
+        handle = self.windowHandle()
+        if handle is not None:
+            handle.screenChanged.connect(self._ensure_on_screen)
+
+    def _on_screen_added(self, screen):
+        self._connect_screen(screen)
+        self._ensure_on_screen()
+
+    def _connect_screen(self, screen):
+        if screen in self._watched_screens:
+            return
+        self._watched_screens.append(screen)
+        screen.geometryChanged.connect(self._ensure_on_screen)
+        screen.availableGeometryChanged.connect(self._ensure_on_screen)
+
+    def _ensure_on_screen(self, *_):
+        """Pulls the clock back inside the visible desktop.
+
+        Games routinely change the display mode.  A clock parked near the old
+        edge then sits outside the new desktop and is clipped away - which
+        looks exactly like 'the timer disappeared over the game' even though
+        it is still running and still topmost.
+        """
+        geo = self.frameGeometry()
+        screen = (QGuiApplication.screenAt(geo.center())
+                  or QGuiApplication.screenAt(geo.topLeft())
+                  or QGuiApplication.primaryScreen())
+        if screen is None:
+            return
+        area = screen.availableGeometry()
+        x = max(area.left(), min(geo.x(), area.right() - geo.width() + 1))
+        y = max(area.top(), min(geo.y(), area.bottom() - geo.height() + 1))
+        if (x, y) != (geo.x(), geo.y()):
+            self.anim_geom.stop()
+            self.move(x, y)
 
     # ── Frames ──
     def _needs_frames(self):
